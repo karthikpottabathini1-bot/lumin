@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lumin — Turn Threads feedback into PRs",
-  description: "AI-powered product development platform that transforms user feedback from Instagram Threads into actionable GitHub pull requests.",
+  title: "Lumin — Turn feedback into PRs",
+  description: "AI-powered product development platform that transforms user feedback from any site into actionable GitHub pull requests.",
 };
 
 export default function RootLayout({
