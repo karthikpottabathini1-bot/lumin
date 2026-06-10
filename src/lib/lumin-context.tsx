@@ -44,36 +44,42 @@ export function LuminProvider({ children }: { children: ReactNode }) {
   const [connectedSite, setConnectedSite] = useState<string>('HabitOS');
   const [connectedSiteUrl, setConnectedSiteUrl] = useState<string>('');
 
-  // Simulate new Threads feedback arriving periodically
+  // Poll Threads for new replies every 30s when connected
   useEffect(() => {
-    const newComments = [
-      { username: 'lisa.ui', avatar: 'LU', content: 'Really need streak badges! Would make the app so much more motivating 🏆' },
-      { username: 'tom.builds', avatar: 'TB', content: 'A widget for iOS would be perfect for quick habit check-ins' },
-      { username: 'nina.codes', avatar: 'NC', content: 'The weekly chart is great but I want a yearly view too' },
-      { username: 'omar.fyi', avatar: 'OF', content: 'Integration with Apple Health would make this 10x better' },
-      { username: 'zara.dev', avatar: 'ZD', content: 'Please add habit categories with custom colors!' },
-    ];
+    let seen = new Set(feedback.map((f) => f.content));
 
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < newComments.length) {
-        const comment = newComments[index];
-        setFeedback((prev) => [
-          {
-            id: `live_${Date.now()}`,
-            username: comment.username,
-            avatar: comment.avatar,
-            content: comment.content,
-            timestamp: 'Just now',
-            status: 'new',
-            threadId: 'thread_1',
-          },
-          ...prev,
-        ]);
-        index++;
+    const pollThreads = async () => {
+      try {
+        const statusRes = await fetch('/api/threads/status');
+        const status = await statusRes.json();
+        if (!status.connected) return;
+
+        const postsRes = await fetch('/api/threads/posts');
+        const posts = await postsRes.json();
+        if (!posts.threads || posts.threads.length === 0) return;
+
+        const latestThread = posts.threads[0];
+        const repliesRes = await fetch(`/api/threads/posts?threadId=${latestThread.id}`);
+        const replies = await repliesRes.json();
+        if (!replies.replies) return;
+
+        for (const reply of replies.replies) {
+          if (!seen.has(reply.text)) {
+            seen.add(reply.text);
+            addFeedback(
+              reply.username || 'threads_user',
+              (reply.username || 'TU').slice(0, 2).toUpperCase(),
+              reply.text
+            );
+          }
+        }
+      } catch {
+        // Silently fail
       }
-    }, 12000); // New comment every 12 seconds
+    };
 
+    pollThreads();
+    const interval = setInterval(pollThreads, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -106,7 +112,6 @@ export function LuminProvider({ children }: { children: ReactNode }) {
 
       simulatePipeline(pr.id);
 
-      // Call the real pipeline API in the background
       fetch('/api/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,12 +137,19 @@ export function LuminProvider({ children }: { children: ReactNode }) {
   );
 
   const simulatePipeline = useCallback((prId: string) => {
+    const steps = [
+      { step: 'repo_analysis' as PRStep, delay: 1500 },
+      { step: 'implementation_plan' as PRStep, delay: 2000 },
+      { step: 'code_generation' as PRStep, delay: 2800 },
+      { step: 'test_creation' as PRStep, delay: 1800 },
+      { step: 'test_execution' as PRStep, delay: 2200 },
+      { step: 'pr_creation' as PRStep, delay: 1500 },
+    ];
+
     let i = 0;
-
     const advance = () => {
-      if (i >= PIPELINE_STEPS.length) return;
-
-      const stepDef = PIPELINE_STEPS[i];
+      if (i >= steps.length) return;
+      const stepDef = steps[i];
 
       setTimeout(() => {
         setPullRequests((prev) => {
@@ -145,8 +157,8 @@ export function LuminProvider({ children }: { children: ReactNode }) {
           if (!pr) return prev;
 
           const completedSteps = [...pr.completedSteps, stepDef.step];
-          const isLast = i === PIPELINE_STEPS.length - 1;
-          const nextStep = isLast ? 'pr_creation' : PIPELINE_STEPS[i + 1]?.step || 'pr_creation';
+          const isLast = i === steps.length - 1;
+          const nextStep = isLast ? 'pr_creation' : steps[i + 1]?.step || 'pr_creation';
 
           let status: PRStatus = pr.status;
           if (i >= 2) status = 'implementing';
@@ -170,11 +182,7 @@ export function LuminProvider({ children }: { children: ReactNode }) {
           if (stepDef.step === 'test_execution') {
             const total = Math.floor(Math.random() * 20 + 15);
             const failed = Math.random() > 0.3 ? 0 : Math.floor(Math.random() * 3 + 1);
-            updates.testResults = {
-              total,
-              passed: total - failed,
-              failed,
-            };
+            updates.testResults = { total, passed: total - failed, failed };
           }
 
           if (isLast) {
