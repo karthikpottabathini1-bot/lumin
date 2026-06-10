@@ -18,8 +18,10 @@ interface LuminContextType {
   pullRequests: PullRequest[];
   connectedSite: string;
   connectedSiteUrl: string;
+  redditPostUrl: string;
   setConnectedSite: (url: string) => void;
   setConnectedSiteUrl: (url: string) => void;
+  setRedditPostUrl: (url: string) => void;
   approveRequest: (requestId: string) => PullRequest | null;
   addFeedback: (username: string, avatar: string, content: string) => void;
   getRequestById: (id: string) => ClusteredRequest | undefined;
@@ -43,45 +45,37 @@ export function LuminProvider({ children }: { children: ReactNode }) {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>(mockData.pullRequests);
   const [connectedSite, setConnectedSite] = useState<string>('HabitOS');
   const [connectedSiteUrl, setConnectedSiteUrl] = useState<string>('');
+  const [redditPostUrl, setRedditPostUrl] = useState<string>('');
 
-  // Poll Threads for new replies every 30s when connected
+  // Poll Reddit post for new comments every 30s
   useEffect(() => {
-    let seen = new Set(feedback.map((f) => f.content));
+    let seen = new Set<string>();
+    const lastCommentIds = new Set<string>();
 
-    const pollThreads = async () => {
+    const pollReddit = async () => {
+      if (!redditPostUrl) return;
       try {
-        const statusRes = await fetch('/api/threads/status');
-        const status = await statusRes.json();
-        if (!status.connected) return;
+        const res = await fetch(`/api/reddit?url=${encodeURIComponent(redditPostUrl)}`);
+        const data = await res.json();
+        if (!data.comments) return;
 
-        const postsRes = await fetch('/api/threads/posts');
-        const posts = await postsRes.json();
-        if (!posts.threads || posts.threads.length === 0) return;
+        for (const comment of data.comments) {
+          if (lastCommentIds.has(comment.id)) continue;
+          lastCommentIds.add(comment.id);
 
-        const latestThread = posts.threads[0];
-        const repliesRes = await fetch(`/api/threads/posts?threadId=${latestThread.id}`);
-        const replies = await repliesRes.json();
-        if (!replies.replies) return;
-
-        for (const reply of replies.replies) {
-          if (!seen.has(reply.text)) {
-            seen.add(reply.text);
-            addFeedback(
-              reply.username || 'threads_user',
-              (reply.username || 'TU').slice(0, 2).toUpperCase(),
-              reply.text
-            );
+          if (!seen.has(comment.body)) {
+            seen.add(comment.body);
+            const avatar = (comment.author || 'rb').slice(0, 2).toUpperCase();
+            addFeedback(comment.author || 'reddit_user', avatar, comment.body);
           }
         }
-      } catch {
-        // Silently fail
-      }
+      } catch {}
     };
 
-    pollThreads();
-    const interval = setInterval(pollThreads, 30000);
+    pollReddit();
+    const interval = setInterval(pollReddit, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [redditPostUrl]);
 
   const approveRequest = useCallback(
     (requestId: string): PullRequest | null => {
@@ -233,8 +227,10 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         pullRequests,
         connectedSite,
         connectedSiteUrl,
+        redditPostUrl,
         setConnectedSite,
         setConnectedSiteUrl,
+        setRedditPostUrl,
         approveRequest,
         addFeedback,
         getRequestById,
