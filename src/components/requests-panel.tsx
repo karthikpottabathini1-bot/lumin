@@ -1,4 +1,7 @@
+'use client';
+
 import { ClusteredRequest } from '@/lib/types';
+import { useLumin } from '@/lib/lumin-context';
 
 function DemandScore({ score }: { score: number }) {
   const circumference = 2 * Math.PI * 18;
@@ -42,6 +45,8 @@ function DemandScore({ score }: { score: number }) {
 }
 
 function RequestCard({ request, index }: { request: ClusteredRequest; index: number }) {
+  const { approveRequest } = useLumin();
+
   return (
     <div
       className="group flex gap-4 p-4 rounded-xl transition-all duration-300 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06]"
@@ -80,9 +85,18 @@ function RequestCard({ request, index }: { request: ClusteredRequest; index: num
             </svg>
             <span className="text-xs text-zinc-500">{request.feedbackCount} requests</span>
           </div>
-          <button className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all duration-200 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)]">
-            Approve
-          </button>
+          {request.status === 'approved' ? (
+            <span className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Pipeline running...
+            </span>
+          ) : (
+            <button
+              onClick={() => approveRequest(request.id)}
+              className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all duration-200 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] cursor-pointer"
+            >
+              Approve
+            </button>
+          )}
         </div>
       </div>
     </div>

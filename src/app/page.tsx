@@ -5,10 +5,11 @@ import DashboardHeader from '@/components/dashboard-header';
 import FeedbackPanel from '@/components/feedback-panel';
 import RequestsPanel from '@/components/requests-panel';
 import PRPanel from '@/components/pr-panel';
-import { mockData } from '@/lib/mock-data';
+import { useLumin } from '@/lib/lumin-context';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const { feedback, requests, pullRequests, connectedSite, setConnectedSite } = useLumin();
 
   useEffect(() => {
     setMounted(true);
@@ -46,19 +47,19 @@ export default function Home() {
             className="animate-slide-up opacity-0"
             style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
           >
-            <FeedbackPanel feedback={mockData.feedback} />
+            <FeedbackPanel feedback={feedback} />
           </div>
           <div
             className="animate-slide-up opacity-0"
             style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
           >
-            <RequestsPanel requests={mockData.requests} />
+            <RequestsPanel requests={requests} />
           </div>
           <div
             className="animate-slide-up opacity-0"
             style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
           >
-            <PRPanel pullRequests={mockData.pullRequests} />
+            <PRPanel pullRequests={pullRequests} />
           </div>
         </div>
       </main>
@@ -73,7 +74,7 @@ export default function Home() {
             Supabase pgvector
           </span>
           <span className="text-zinc-700">|</span>
-          <span>AWS Inferentia</span>
+          <span>{connectedSite} connected</span>
           <span className="text-zinc-700">|</span>
           <span>TrueFoundry</span>
           <span className="text-zinc-700">|</span>
