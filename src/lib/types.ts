@@ -20,6 +20,7 @@ export interface Feedback {
   timestamp: string;
   status: FeedbackStatus;
   threadId: string;
+  likes: number;
 }
 
 export interface ClusteredRequest {

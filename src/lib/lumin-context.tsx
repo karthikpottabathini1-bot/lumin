@@ -21,6 +21,7 @@ interface LuminContextType {
   setConnectedSite: (url: string) => void;
   setConnectedSiteUrl: (url: string) => void;
   approveRequest: (requestId: string) => PullRequest | null;
+  likeFeedback: (feedbackId: string) => void;
   addFeedback: (username: string, avatar: string, content: string) => void;
   getRequestById: (id: string) => ClusteredRequest | undefined;
   getPRById: (id: string) => PullRequest | undefined;
@@ -190,16 +191,61 @@ export function LuminProvider({ children }: { children: ReactNode }) {
   const addFeedback = useCallback((username: string, avatar: string, content: string) => {
     setFeedback((prev) => [
       {
-        id: `thread_${Date.now()}`,
+        id: `fb_${Date.now()}`,
         username,
         avatar,
         content,
         timestamp: 'Just now',
         status: 'new',
-        threadId: 'thread_1',
+        threadId: 'widget',
+        likes: 0,
       },
       ...prev,
     ]);
+  }, []);
+
+  const likeFeedback = useCallback((feedbackId: string) => {
+    let likedItem: Feedback | null = null;
+
+    setFeedback((prev) => {
+      const item = prev.find((f) => f.id === feedbackId);
+      if (!item) return prev;
+      likedItem = { ...item, likes: item.likes + 1 };
+      return prev.map((f) => (f.id === feedbackId ? likedItem! : f));
+    });
+
+    // likedItem might not be set yet due to async setState
+    // But the setFeedback runs synchronously in a transition
+    setTimeout(() => {
+      if (!likedItem || likedItem.likes < 1) return;
+      const newRequest: ClusteredRequest = {
+        id: `req_${Date.now()}`,
+        title: likedItem.content.slice(0, 50) + (likedItem.content.length > 50 ? '...' : ''),
+        description: likedItem.content,
+        feedbackCount: likedItem.likes,
+        demandScore: Math.min(likedItem.likes * 30 + 40, 99),
+        status: 'pending',
+        feedbackSamples: [likedItem.content],
+        clusterId: `cluster_${Date.now()}`,
+        createdAt: todayStr(),
+      };
+
+      setRequests((prev) => {
+        // Check if similar request exists
+        const existing = prev.find(
+          (r) => r.feedbackSamples[0] === likedItem!.content
+        );
+        if (existing) return prev;
+        return [newRequest, ...prev];
+      });
+
+      // Auto-approve if demand score is high enough
+      if (newRequest.demandScore >= 50) {
+        setTimeout(() => {
+          approveRequest(newRequest.id);
+        }, 500);
+      }
+    }, 0);
   }, []);
 
   const getRequestById = useCallback(
@@ -223,6 +269,7 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         setConnectedSite,
         setConnectedSiteUrl,
         approveRequest,
+        likeFeedback,
         addFeedback,
         getRequestById,
         getPRById,
