@@ -17,7 +17,9 @@ interface LuminContextType {
   requests: ClusteredRequest[];
   pullRequests: PullRequest[];
   connectedSite: string;
+  connectedSiteUrl: string;
   setConnectedSite: (url: string) => void;
+  setConnectedSiteUrl: (url: string) => void;
   approveRequest: (requestId: string) => PullRequest | null;
   getRequestById: (id: string) => ClusteredRequest | undefined;
   getPRById: (id: string) => PullRequest | undefined;
@@ -35,10 +37,44 @@ const PIPELINE_STEPS: { step: PRStep; label: string; delay: number }[] = [
 ];
 
 export function LuminProvider({ children }: { children: ReactNode }) {
-  const [feedback] = useState<Feedback[]>(mockData.feedback);
+  const [feedback, setFeedback] = useState<Feedback[]>(mockData.feedback);
   const [requests, setRequests] = useState<ClusteredRequest[]>(mockData.requests);
   const [pullRequests, setPullRequests] = useState<PullRequest[]>(mockData.pullRequests);
   const [connectedSite, setConnectedSite] = useState<string>('HabitOS');
+  const [connectedSiteUrl, setConnectedSiteUrl] = useState<string>('');
+
+  // Simulate new Threads feedback arriving periodically
+  useEffect(() => {
+    const newComments = [
+      { username: 'lisa.ui', avatar: 'LU', content: 'Really need streak badges! Would make the app so much more motivating 🏆' },
+      { username: 'tom.builds', avatar: 'TB', content: 'A widget for iOS would be perfect for quick habit check-ins' },
+      { username: 'nina.codes', avatar: 'NC', content: 'The weekly chart is great but I want a yearly view too' },
+      { username: 'omar.fyi', avatar: 'OF', content: 'Integration with Apple Health would make this 10x better' },
+      { username: 'zara.dev', avatar: 'ZD', content: 'Please add habit categories with custom colors!' },
+    ];
+
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < newComments.length) {
+        const comment = newComments[index];
+        setFeedback((prev) => [
+          {
+            id: `live_${Date.now()}`,
+            username: comment.username,
+            avatar: comment.avatar,
+            content: comment.content,
+            timestamp: 'Just now',
+            status: 'new',
+            threadId: 'thread_1',
+          },
+          ...prev,
+        ]);
+        index++;
+      }
+    }, 12000); // New comment every 12 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const approveRequest = useCallback(
     (requestId: string): PullRequest | null => {
@@ -172,7 +208,9 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         requests,
         pullRequests,
         connectedSite,
+        connectedSiteUrl,
         setConnectedSite,
+        setConnectedSiteUrl,
         approveRequest,
         getRequestById,
         getPRById,
