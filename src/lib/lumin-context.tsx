@@ -69,6 +69,26 @@ export function LuminProvider({ children }: { children: ReactNode }) {
 
       simulatePipeline(pr.id);
 
+      // Call the real pipeline API in the background
+      fetch('/api/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestTitle: request.title }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.prUrl) {
+            setPullRequests((prev) =>
+              prev.map((p) =>
+                p.id === pr.id
+                  ? { ...p, prUrl: data.prUrl, branch: data.branch, status: 'ready' as const }
+                  : p
+              )
+            );
+          }
+        })
+        .catch((err) => console.log('[Lumin] Pipeline API call failed:', err));
+
       return pr;
     },
     [requests]
