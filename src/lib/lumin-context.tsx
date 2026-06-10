@@ -239,11 +239,9 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         return [newRequest, ...prev];
       });
 
-      // Auto-approve if demand score is high enough
+      // Auto-create a request with elaboration (simulated)
       if (newRequest.demandScore >= 50) {
-        setTimeout(() => {
-          approveRequest(newRequest.id);
-        }, 500);
+        setRequests((prev) => [newRequest, ...prev]);
       }
     }, 0);
   }, []);

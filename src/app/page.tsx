@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import DashboardHeader from '@/components/dashboard-header';
 import ReelPanel from '@/components/reel-panel';
-import RequestsPanel from '@/components/requests-panel';
+import FeatureRequestsPanel from '@/components/feature-requests-panel';
 import PRPanel from '@/components/pr-panel';
 import { useLumin } from '@/lib/lumin-context';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const { requests, pullRequests, connectedSite } = useLumin();
+  const { pullRequests, connectedSite } = useLumin();
 
   useEffect(() => {
     setMounted(true);
@@ -53,7 +53,7 @@ export default function Home() {
             className="animate-slide-up opacity-0"
             style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
           >
-            <RequestsPanel requests={requests} />
+            <FeatureRequestsPanel />
           </div>
           <div
             className="animate-slide-up opacity-0"
