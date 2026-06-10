@@ -18,10 +18,8 @@ interface LuminContextType {
   pullRequests: PullRequest[];
   connectedSite: string;
   connectedSiteUrl: string;
-  redditPostUrl: string;
   setConnectedSite: (url: string) => void;
   setConnectedSiteUrl: (url: string) => void;
-  setRedditPostUrl: (url: string) => void;
   approveRequest: (requestId: string) => PullRequest | null;
   addFeedback: (username: string, avatar: string, content: string) => void;
   getRequestById: (id: string) => ClusteredRequest | undefined;
@@ -45,37 +43,32 @@ export function LuminProvider({ children }: { children: ReactNode }) {
   const [pullRequests, setPullRequests] = useState<PullRequest[]>(mockData.pullRequests);
   const [connectedSite, setConnectedSite] = useState<string>('HabitOS');
   const [connectedSiteUrl, setConnectedSiteUrl] = useState<string>('');
-  const [redditPostUrl, setRedditPostUrl] = useState<string>('');
 
-  // Poll Reddit post for new comments every 30s
+  // Poll Lumin's feedback API (for widget submissions)
   useEffect(() => {
-    let seen = new Set<string>();
-    const lastCommentIds = new Set<string>();
+    let lastCount = 0;
 
-    const pollReddit = async () => {
-      if (!redditPostUrl) return;
+    const pollFeedback = async () => {
       try {
-        const res = await fetch(`/api/reddit?url=${encodeURIComponent(redditPostUrl)}`);
+        const res = await fetch('/api/feedback');
         const data = await res.json();
-        if (!data.comments) return;
+        if (!data.feedback) return;
 
-        for (const comment of data.comments) {
-          if (lastCommentIds.has(comment.id)) continue;
-          lastCommentIds.add(comment.id);
-
-          if (!seen.has(comment.body)) {
-            seen.add(comment.body);
-            const avatar = (comment.author || 'rb').slice(0, 2).toUpperCase();
-            addFeedback(comment.author || 'reddit_user', avatar, comment.body);
+        if (data.feedback.length > lastCount) {
+          // Add new entries to Lumin's feedback
+          const newEntries = data.feedback.slice(lastCount);
+          for (const entry of newEntries) {
+            addFeedback(entry.username, entry.avatar, entry.content);
           }
+          lastCount = data.feedback.length;
         }
       } catch {}
     };
 
-    pollReddit();
-    const interval = setInterval(pollReddit, 30000);
+    pollFeedback();
+    const interval = setInterval(pollFeedback, 10000);
     return () => clearInterval(interval);
-  }, [redditPostUrl]);
+  }, []);
 
   const approveRequest = useCallback(
     (requestId: string): PullRequest | null => {
@@ -227,10 +220,8 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         pullRequests,
         connectedSite,
         connectedSiteUrl,
-        redditPostUrl,
         setConnectedSite,
         setConnectedSiteUrl,
-        setRedditPostUrl,
         approveRequest,
         addFeedback,
         getRequestById,
