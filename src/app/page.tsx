@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import DashboardHeader from '@/components/dashboard-header';
-import ReelPanel from '@/components/reel-panel';
 import FeatureRequestsPanel from '@/components/feature-requests-panel';
 import PRPanel from '@/components/pr-panel';
 import { useLumin } from '@/lib/lumin-context';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const { pullRequests, connectedSite } = useLumin();
+  const { pullRequests } = useLumin();
 
   useEffect(() => {
     setMounted(true);
@@ -42,22 +41,16 @@ export default function Home() {
       <DashboardHeader />
 
       <main className="flex-1 relative z-10 p-4 sm:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-5rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-5rem)]">
           <div
             className="animate-slide-up opacity-0"
             style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
-          >
-            <ReelPanel />
-          </div>
-          <div
-            className="animate-slide-up opacity-0"
-            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
           >
             <FeatureRequestsPanel />
           </div>
           <div
             className="animate-slide-up opacity-0"
-            style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
+            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
           >
             <PRPanel pullRequests={pullRequests} />
           </div>
