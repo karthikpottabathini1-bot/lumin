@@ -21,6 +21,7 @@ interface LuminContextType {
   setConnectedSite: (url: string) => void;
   setConnectedSiteUrl: (url: string) => void;
   approveRequest: (requestId: string) => PullRequest | null;
+  addFeedback: (username: string, avatar: string, content: string) => void;
   getRequestById: (id: string) => ClusteredRequest | undefined;
   getPRById: (id: string) => PullRequest | undefined;
 }
@@ -191,6 +192,21 @@ export function LuminProvider({ children }: { children: ReactNode }) {
     advance();
   }, []);
 
+  const addFeedback = useCallback((username: string, avatar: string, content: string) => {
+    setFeedback((prev) => [
+      {
+        id: `thread_${Date.now()}`,
+        username,
+        avatar,
+        content,
+        timestamp: 'Just now',
+        status: 'new',
+        threadId: 'thread_1',
+      },
+      ...prev,
+    ]);
+  }, []);
+
   const getRequestById = useCallback(
     (id: string) => requests.find((r) => r.id === id),
     [requests]
@@ -212,6 +228,7 @@ export function LuminProvider({ children }: { children: ReactNode }) {
         setConnectedSite,
         setConnectedSiteUrl,
         approveRequest,
+        addFeedback,
         getRequestById,
         getPRById,
       }}

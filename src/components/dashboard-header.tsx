@@ -27,6 +27,12 @@ export default function DashboardHeader() {
           <span className="text-lg font-semibold tracking-tight text-white">Lumin</span>
         </div>
         <div className="hidden sm:flex items-center gap-1 ml-4">
+          <Link
+            href="/threads-simulator"
+            className="px-2 py-1 rounded text-xs font-medium text-purple-400 bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-colors cursor-pointer"
+          >
+            Threads
+          </Link>
           <span className="text-xs text-zinc-600 mr-1">monitoring</span>
           {editing ? (
             <div className="flex items-center gap-1">
