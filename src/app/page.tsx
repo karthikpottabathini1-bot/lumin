@@ -42,16 +42,10 @@ export default function Home() {
 
       <main className="flex-1 relative z-10 p-4 sm:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-5rem)]">
-          <div
-            className="animate-slide-up opacity-0"
-            style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}
-          >
+          <div className="animate-slide-up opacity-0" style={{ animationDelay: '0ms', animationFillMode: 'forwards' }}>
             <FeatureRequestsPanel />
           </div>
-          <div
-            className="animate-slide-up opacity-0"
-            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
-          >
+          <div className="animate-slide-up opacity-0" style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}>
             <PRPanel pullRequests={pullRequests} />
           </div>
         </div>
@@ -64,14 +58,12 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
             </span>
-            Supabase pgvector
+            Powered by OpenCode
           </span>
           <span className="text-zinc-700">|</span>
-          <span>{connectedSite} connected</span>
+          <span>OpenRouter AI</span>
           <span className="text-zinc-700">|</span>
-          <span>TrueFoundry</span>
-          <span className="text-zinc-700">|</span>
-          <span>OpenCode</span>
+          <span>GitHub PRs</span>
         </div>
       </div>
     </div>
